@@ -1,0 +1,21 @@
+name: ml_lab_1
+channels:
+  - conda-forge
+dependencies:
+  - python=3.10.11
+  - numpy=1.26.4
+  - scipy
+  - pandas
+  - scikit-learn
+  - jupyterlab
+  - matplotlib
+  - seaborn
+  - plotly
+  - tensorflow=2.18.0
+  - json5
+  - streamlit
+  - tk
+  - Pillow
+  - pip
+  - pip:
+    - neurolab
