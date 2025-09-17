@@ -6,7 +6,11 @@
 
 ## Как работать
 
-Для быстрого развертывания используется conda, настройки окружения приведены в *environment.yml*.
+Для быстрого развертывания используется `conda`, настройки окружения приведены в *environment.yml*.
 Для этого достаточно вызвать `conda env create -f environment.yml`.
 Список окружений - `conda env list`
 Сменить окружение - `conda activate <name>`
+
+## Учебные материалы
+
+Задания и прочие материалы по дисциплине доступны по [ссылке](https://drive.google.com/drive/folders/1Fi-HGOKFQxGNPhc20_m8kz6Ix22rL3rb?yqrid=0be8a2c6)
