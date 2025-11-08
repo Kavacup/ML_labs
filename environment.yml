@@ -1,4 +1,4 @@
-name: ml_lab_1
+name: ml_labs
 channels:
   - conda-forge
 dependencies:
@@ -11,11 +11,12 @@ dependencies:
   - matplotlib
   - seaborn
   - plotly
-  - tensorflow=2.18.0
+  - tensorflow=2.19.0
   - json5
   - streamlit
   - tk
   - Pillow
   - pip
+  - cudatoolkit
   - pip:
     - neurolab
