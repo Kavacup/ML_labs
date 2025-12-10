@@ -1,19 +1,19 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
-import glob
 import json
-import os
 import pickle
 from pathlib import Path
 from typing import Dict, Any
 import time
 import tensorflow as tf
 
-models_dir = "./out"
+models_dir = "./"
 DEBOUNCE_SECONDS = 1.0
 if 'force_run_predict' not in st.session_state:
     st.session_state['force_run_predict'] = False
+if 'models_loaded' not in st.session_state:
+    st.session_state['models_loaded'] = False
+
 
 # SUPER FUNCTIONS
 def load_models(models_dir: str = models_dir) -> Dict[str, Any]:
@@ -23,11 +23,12 @@ def load_models(models_dir: str = models_dir) -> Dict[str, Any]:
         return models
     for file in path.glob("*Model.pkl"):
         model = pickle.load(open(file, "rb"))
-        models[file.stem.removesuffix("Model")] = model # stem => no extension
+        models[file.stem.removesuffix("Model")] = model
     for file in path.glob("*Model.keras"):
         model = tf.keras.models.load_model(file)
-        models[file.stem.removesuffix("Model")] = model # stem => no extension
+        models[file.stem.removesuffix("Model")] = model
     return models
+
 
 def load_metrics(metrics_path: str = models_dir) -> Dict[str, Dict[str, float]]:
     metrics_dict = {}
@@ -36,8 +37,9 @@ def load_metrics(metrics_path: str = models_dir) -> Dict[str, Dict[str, float]]:
         return metrics_dict
     for file in path.glob("*Meta.json"):
         metrics = json.load(open(file, "r"))
-        metrics_dict[file.stem.removesuffix("Meta")] = metrics # stem => no extension
+        metrics_dict[file.stem.removesuffix("Meta")] = metrics
     return metrics_dict
+
 
 def load_scalers(scalers_path: str = models_dir) -> Dict[str, Any]:
     scalers = {}
@@ -48,6 +50,7 @@ def load_scalers(scalers_path: str = models_dir) -> Dict[str, Any]:
         scaler = pickle.load(open(file, "rb"))
         scalers[file.stem] = scaler # stem => no extension
     return scalers
+
 
 def mark_change():
     st.session_state['force_run_predict'] = True
@@ -82,7 +85,7 @@ if 'dist_coast' not in st.session_state:
     st.session_state['dist_coast'] = 10000.0
 
 st.sidebar.write("Distance to coast - расстояние до побережья [м]")
-col1, col2 = st.sidebar.columns([2,1])
+col1, col2 = st.sidebar.columns([2, 1])
 with col1:
     dist_slider = st.slider(
         "slider",
@@ -112,11 +115,19 @@ st.sidebar.markdown("---")
 save_predict = st.sidebar.button("Наколдовать магию и сохранить!", on_click=mark_change)
 
 # -----------------------------------------------------------------------------
-models = load_models()
-metrics = load_metrics()
-scalers = load_scalers()
-if len(models) == 0:
-    st.sidebar.error(f"Модели не найдены в {models_dir} (*.pkl). А ну побежал тренить!")
+
+if st.session_state['models_loaded'] is False:
+    st.session_state['models'] = load_models()
+    st.session_state['metrics'] = load_metrics()
+    st.session_state['scalers'] = load_scalers()
+    if len(st.session_state['models']) == 0:
+        st.sidebar.error(f"Модели не найдены в {models_dir} (*.pkl). А ну побежал тренить!")
+    else:
+        st.session_state['models_loaded'] = True
+
+models = st.session_state['models']
+metrics = st.session_state['metrics']
+scalers = st.session_state['scalers']
 
 # -----------------------------------------------------------------------------
 st.title("Прогноз медианного дохода (Median Income) — California households")
@@ -131,7 +142,7 @@ input_df = pd.DataFrame({
     "Tot_Rooms": [total_rooms],
     "Median_Age": [median_age],
     "Population": [population]
-}) # dataVector to df
+})  # dataVector to df
 
 st.subheader("Текущие входные значения")
 st.dataframe(input_df)
@@ -139,7 +150,7 @@ st.dataframe(input_df)
 # -----------------------------------------------------------------------------
 if 'last_pred_time' not in st.session_state:
     st.session_state['last_pred_time'] = 0.0
-    
+
 now = time.time()
 time_since_change = now - st.session_state['last_pred_time']
 
@@ -151,7 +162,7 @@ if (time_since_change >= DEBOUNCE_SECONDS or st.session_state['force_run_predict
         if model is None:
             st.error(f"Модель {model_name} не загружена??!!?")
             continue
-        
+
         mustScale = metrics.get(model_name).get('mustScale')
         pred = 0
         if (mustScale):
@@ -162,7 +173,7 @@ if (time_since_change >= DEBOUNCE_SECONDS or st.session_state['force_run_predict
             pred = scalerY.inverse_transform(predScaled)[0]
         else:
             pred = model.predict(input_df)
-        
+
         model_metrics = metrics.get(model_name)
         r2 = model_metrics.get('R2')
         rmse = model_metrics.get('RMSE')
@@ -185,7 +196,7 @@ for column, result in zip(cols, results):
     with column:
         st.metric(label=f"Модель: {result['model']}",
                   value=f"{result['prediction']:.4f}"
-        )
+                  )
         st.write(f"**r2:** {result['r2']:.4f}")
         st.write(f"**RMSE:** {result['rmse']:.4f}")
         st.write(f"**MAE:** {result['mae']:.4f}")
