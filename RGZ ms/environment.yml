@@ -1,0 +1,14 @@
+name: ml_rgz_1
+channels:
+  - conda-forge
+dependencies:
+  - python
+  - numpy
+  - pandas
+  - scikit-learn
+  - statsmodels
+  - jupyterlab
+  - scikit-learn
+  - matplotlib
+  - tensorflow
+  - seaborn
